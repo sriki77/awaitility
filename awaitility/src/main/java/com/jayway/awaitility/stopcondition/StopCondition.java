@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jayway.awaitility.core;
+package com.jayway.awaitility.stopcondition;
 
-public interface Condition<T> {
+import com.jayway.awaitility.core.Condition;
 
-    /**
-     * <p>Await for the condition to complete</p>
-     *
-     * @return The awaited object.
-     */
-    T await();
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
+
+public interface StopCondition<T> extends Condition<T> {
+
+    void await(Future future) throws InterruptedException, ExecutionException, TimeoutException;
+
+    boolean await(CountDownLatch latch) throws InterruptedException;
 }

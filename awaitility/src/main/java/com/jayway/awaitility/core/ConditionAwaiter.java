@@ -16,6 +16,7 @@
 package com.jayway.awaitility.core;
 
 import com.jayway.awaitility.Duration;
+import com.jayway.awaitility.stopcondition.StopCondition;
 
 import java.beans.Introspector;
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -79,12 +80,8 @@ abstract class ConditionAwaiter implements UncaughtExceptionHandler {
                         }
                         pollCount = pollCount + 1;
                         Future<?> future = executor.submit(new ConditionPoller(pollInterval));
-                        Duration maxWaitTime = conditionSettings.getMaxWaitTime();
-                        if (maxWaitTime == Duration.FOREVER) {
-                            future.get();
-                        } else {
-                            future.get(maxWaitTime.getValue(), maxWaitTime.getTimeUnit());
-                        }
+                        StopCondition stopCondition = conditionSettings.getMaxWaitTime();
+                        stopCondition.await(future);
                         pollInterval = conditionSettings.getPollInterval().next(pollCount, pollInterval);
                         Thread.sleep(pollInterval.getValueInMS());
                     }
@@ -97,27 +94,18 @@ abstract class ConditionAwaiter implements UncaughtExceptionHandler {
 
         try {
             try {
-                final Duration maxWaitTime = conditionSettings.getMaxWaitTime();
-                final long timeout = maxWaitTime.getValue();
-                final boolean finishedBeforeTimeout;
-                if (maxWaitTime == Duration.FOREVER) {
-                    latch.await();
-                    finishedBeforeTimeout = true;
-                } else if (maxWaitTime == Duration.SAME_AS_POLL_INTERVAL) {
-                    throw new IllegalStateException("Cannot use 'SAME_AS_POLL_INTERVAL' as maximum wait time.");
-                } else {
-                    finishedBeforeTimeout = latch.await(timeout, maxWaitTime.getTimeUnit());
-                }
+                StopCondition stopCondition = conditionSettings.getMaxWaitTime();
+                final boolean finishedBeforeTimeout = stopCondition.await(latch);
                 if (throwable != null) {
                     throw throwable;
                 } else if (!finishedBeforeTimeout) {
-                    final String maxWaitTimeLowerCase = maxWaitTime.getTimeUnitAsString();
+                    final String maxWaitTimeLowerCase = ((Duration)stopCondition.await()).getTimeUnitAsString();
                     final String message;
                     if (conditionSettings.hasAlias()) {
                         message = String.format("Condition with alias '%s' didn't complete within %s %s because %s.",
-                                conditionSettings.getAlias(), timeout, maxWaitTimeLowerCase, Introspector.decapitalize(getTimeoutMessage()));
+                                conditionSettings.getAlias(), ((Duration)stopCondition.await()).getValue(), maxWaitTimeLowerCase, Introspector.decapitalize(getTimeoutMessage()));
                     } else {
-                        message = String.format("%s within %s %s.", getTimeoutMessage(), timeout, maxWaitTimeLowerCase);
+                        message = String.format("%s within %s %s.", getTimeoutMessage(), ((Duration)stopCondition.await()).getValue(), maxWaitTimeLowerCase);
                     }
 
                     ConditionTimeoutException e = new ConditionTimeoutException(message);

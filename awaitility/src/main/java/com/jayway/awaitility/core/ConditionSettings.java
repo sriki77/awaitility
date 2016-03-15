@@ -17,10 +17,11 @@ package com.jayway.awaitility.core;
 
 import com.jayway.awaitility.Duration;
 import com.jayway.awaitility.pollinterval.PollInterval;
+import com.jayway.awaitility.stopcondition.StopCondition;
 
 class ConditionSettings {
     private final String alias;
-    private final Duration maxWaitTime;
+    private final StopCondition maxWaitTime;
     private final PollInterval pollInterval;
     private final Duration pollDelay;
     private final boolean catchUncaughtExceptions;
@@ -38,7 +39,7 @@ class ConditionSettings {
      * @param conditionEvaluationListener a {@link ConditionEvaluationListener} object.
      * @param ignoreExceptions            a boolean.
      */
-    public ConditionSettings(String alias, boolean catchUncaughtExceptions, Duration maxWaitTime,
+    public ConditionSettings(String alias, boolean catchUncaughtExceptions, StopCondition maxWaitTime,
                              PollInterval pollInterval, Duration pollDelay, ConditionEvaluationListener conditionEvaluationListener,
                              ExceptionIgnorer ignoreExceptions) {
         if (maxWaitTime == null) {
@@ -68,9 +69,9 @@ class ConditionSettings {
     /**
      * <p>Getter for the field <code>maxWaitTime</code>.</p>
      *
-     * @return a {@link com.jayway.awaitility.Duration} object.
+     * @return a {@link com.jayway.awaitility.stopcondition.StopCondition} object.
      */
-    public Duration getMaxWaitTime() {
+    public StopCondition getMaxWaitTime() {
         return maxWaitTime;
     }
 
